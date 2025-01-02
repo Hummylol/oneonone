@@ -18,6 +18,7 @@ function Chat() {
   const [newMessage, setNewMessage] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, messageId: null, isSender: false });
+  const [showUserList, setShowUserList] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -140,7 +141,7 @@ function Chat() {
     try {
       const userId = localStorage.getItem('userId');
       const response = await axios.delete(
-        `${backendlink}user/message/${contextMenu.messageId}`,
+        `${backendlink}/user/message/${contextMenu.messageId}`,
         { params: { userId: userId } }
       );
       
@@ -163,26 +164,33 @@ function Chat() {
   }, []);
 
   return (
-    <div className="h-screen bg-gray-100 flex">
-      <div className="w-1/3 p-4 border-r">
-        <input
-          type="text"
-          placeholder="Search users"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full p-2 border rounded mb-4"
-        />
-        <button
-          onClick={handleSearch}
-          className="bg-blue-500 text-white w-full p-2 rounded"
-        >
-          Search
-        </button>
+    <div className="h-screen bg-gray-100 flex flex-col md:flex-row">
+      <div className={`${
+        selectedUser && !showUserList ? 'hidden' : 'block'
+      } w-full md:w-1/3 p-4 border-r`}>
+        <div className="flex gap-2 mb-4">
+          <input
+            type="text"
+            placeholder="Search users"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="flex-1 p-2 border rounded"
+          />
+          <button
+            onClick={handleSearch}
+            className="bg-blue-500 text-white px-4 py-2 rounded whitespace-nowrap"
+          >
+            Search
+          </button>
+        </div>
         <ul>
           {users.map((user) => (
             <li
               key={user._id}
-              onClick={() => handleSelectUser(user)}
+              onClick={() => {
+                handleSelectUser(user);
+                setShowUserList(false);
+              }}
               className="p-2 border rounded my-2 cursor-pointer hover:bg-gray-200"
             >
               {user.username}
@@ -191,11 +199,21 @@ function Chat() {
         </ul>
       </div>
 
-      <div className="w-2/3 p-4 flex flex-col">
+      <div className={`${
+        !selectedUser || showUserList ? 'hidden' : 'block'
+      } w-full md:block md:w-2/3 p-4 flex flex-col h-screen`}>
         {selectedUser ? (
           <>
-            <h2 className="text-lg font-bold mb-4">{selectedUser.username}</h2>
-            <div className="h-64 overflow-y-scroll border p-4 flex flex-col space-y-2">
+            <div className="flex items-center gap-2 mb-4">
+              <button
+                onClick={() => setShowUserList(true)}
+                className="md:hidden bg-gray-200 p-2 rounded"
+              >
+                ←
+              </button>
+              <h2 className="text-lg font-bold">{selectedUser.username}</h2>
+            </div>
+            <div className="flex-1 overflow-y-scroll border p-4 flex flex-col space-y-2">
               {messages.map((msg) => (
                 <p
                   key={msg._id}
@@ -233,27 +251,30 @@ function Chat() {
                 </div>
               )}
             </div>
-            <div className="mt-auto">
-              <input
-                type="text"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                className="w-full p-2 border rounded mb-2"
-                placeholder="Type a message"
-              />
-              <button
-                onClick={handleSendMessage}
-                className="bg-blue-500 text-white w-full p-2 rounded"
-              >
-                Send
-              </button>
+            <div className="mt-4">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  className="flex-1 p-2 border rounded"
+                  placeholder="Type a message"
+                />
+                <button
+                  onClick={handleSendMessage}
+                  className="bg-blue-500 text-white px-4 py-2 rounded whitespace-nowrap"
+                >
+                  Send
+                </button>
+              </div>
             </div>
           </>
         ) : (
           <p className="text-gray-500 text-center">Select a user to start chatting</p>
         )}
       </div>
-      <div className="absolute bottom-4 left-4 text-gray-600 border-2 p-4 border-black">
+
+      <div className="fixed bottom-4 left-4 text-gray-600 border-2 p-2 border-black bg-white rounded">
         {currentUser ? currentUser.username : 'Loading...'}
       </div>
     </div>
