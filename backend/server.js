@@ -14,92 +14,79 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ['http://localhost:5173', 'https://humaidchat.vercel.app/'], // Replace with your frontend URL
+    origin: ['http://localhost:5173', 'https://humaidchat.vercel.app'], // Allow both localhost and production URLs
     methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true, // If you need credentials (cookies, etc.) in your requests
   },
 });
 
 // Middleware
 app.use(express.json());
-app.use(cors());
+
+// CORS middleware for express
+app.use(cors({
+  origin: ['http://localhost:5173', 'https://humaidchat.vercel.app'],
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true, // If using cookies or any credentials
+}));
 
 // MongoDB connection
 mongoose
   .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB connected'))
-  .catch((err) => {
-    console.error('MongoDB connection error:', err);
-    process.exit(1); // Exit the process if DB connection fails
-  });
+  .catch((err) => console.error(err));
 
 // Routes
 app.use('/auth', authRoutes);
 app.use('/user', userRoutes);
 
-// Debug: List all routes for easier debugging
-app._router.stack.forEach(function (r) {
-  if (r.route && r.route.path) {
-    console.log(r.route.path);
+// Add this to debug routes
+app._router.stack.forEach(function(r){
+  if (r.route && r.route.path){
+    console.log(r.route.path)
   }
 });
 
 // Add this before your socket.io logic
-const connectedUsers = new Map(); // Using Map for efficient userId lookup
+const connectedUsers = new Set();
 
 // Socket.IO logic
 io.on('connection', (socket) => {
-  const userId = socket.handshake.query.userId;
-
+  const userId = socket.handshake.query.userId; // We'll pass this from the frontend
+  
   if (userId) {
-    connectedUsers.set(userId, socket.id);
+    connectedUsers.add(userId);
     console.log('Connected users:', connectedUsers.size);
   }
 
   socket.on('join_room', (userId) => {
-    if (userId) {
-      socket.join(userId);
-      console.log(`${userId} joined room`);
-    }
+    socket.join(userId);
   });
 
   socket.on('send_message', async (data) => {
     const { senderId, receiverId, text } = data;
 
-    if (!senderId || !receiverId || !text) {
-      console.error('Invalid message data:', data);
-      return;
-    }
-
     try {
-      // Save message to DB
       const chatMessage = new Chat({
         sender: senderId,
         receiver: receiverId,
         message: text,
       });
-
       const savedMessage = await chatMessage.save();
 
+      // Send the complete message object including _id
       const messageToSend = {
         _id: savedMessage._id,
         sender: senderId,
         receiver: receiverId,
         text: savedMessage.message,
-        createdAt: savedMessage.createdAt,
+        createdAt: savedMessage.createdAt
       };
 
-      // Send the message to both users
-      const receiverSocketId = connectedUsers.get(receiverId);
-      const senderSocketId = connectedUsers.get(senderId);
-
-      if (receiverSocketId) {
-        io.to(receiverSocketId).emit('receive_message', messageToSend);
-      }
-      if (senderSocketId) {
-        io.to(senderSocketId).emit('receive_message', messageToSend);
-      }
-
-      console.log('Message sent:', messageToSend);
+      io.to(receiverId).emit('receive_message', messageToSend);
+      io.to(senderId).emit('receive_message', messageToSend);
     } catch (err) {
       console.error('Error saving message:', err.message);
     }
@@ -108,7 +95,7 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     if (userId) {
       connectedUsers.delete(userId);
-      console.log('Disconnected users:', connectedUsers.size);
+      console.log('Connected users:', connectedUsers.size);
     }
   });
 });
