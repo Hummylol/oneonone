@@ -1,6 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 import backendlink from '../backendlink.js';
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Card } from "@/components/ui/card"
+import { Search as SearchIcon } from "lucide-react"
 
 function Search({ onSelectUser }) {
   const [search, setSearch] = useState('');
@@ -17,33 +22,31 @@ function Search({ onSelectUser }) {
   };
 
   return (
-    <div>
-      <div className="flex gap-2 mb-4">
-        <input
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <Input
           type="text"
           placeholder="Search users"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 p-2 border rounded"
+          className="flex-1"
         />
-        <button
-          onClick={handleSearch}
-          className="bg-blue-500 text-white px-4 py-2 rounded whitespace-nowrap"
-        >
+        <Button onClick={handleSearch} variant="secondary">
+          <SearchIcon className="h-4 w-4 mr-2" />
           Search
-        </button>
+        </Button>
       </div>
-      <ul>
+      <ScrollArea className="h-[calc(100vh-200px)]">
         {users.map((user) => (
-          <li
+          <Card
             key={user._id}
             onClick={() => onSelectUser(user)}
-            className="p-2 border rounded my-2 cursor-pointer hover:bg-gray-200"
+            className="p-3 mb-2 cursor-pointer hover:bg-accent transition-colors"
           >
             {user.username}
-          </li>
+          </Card>
         ))}
-      </ul>
+      </ScrollArea>
     </div>
   );
 }

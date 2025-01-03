@@ -4,6 +4,11 @@ import axios from 'axios';
 import backendlink from '../backendlink.js';
 import Search from '../components/Search';
 import ChatBox from '../components/ChatBox';
+import { ThemeToggle } from '../components/ThemeToggle';
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Menu, LogOut } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
 
 const socket = io(backendlink, {
   reconnection: true,
@@ -16,11 +21,11 @@ function Chat() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [messages, setMessages] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
-  const [showUserList, setShowUserList] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) window.location.href = '/';
+    if (!token) navigate('/');
     
     const fetchCurrentUser = async () => {
       try {
@@ -32,7 +37,7 @@ function Chat() {
     };
 
     fetchCurrentUser();
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     socket.on('connect', () => {
@@ -54,7 +59,6 @@ function Chat() {
 
   const handleSelectUser = async (user) => {
     setSelectedUser(user);
-    setShowUserList(false);
     socket.emit('join_room', localStorage.getItem('userId'));
 
     try {
@@ -65,6 +69,12 @@ function Chat() {
     } catch (err) {
       console.error('Error fetching chat history:', err.message);
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+    navigate('/');
   };
 
   useEffect(() => {
@@ -96,37 +106,57 @@ function Chat() {
   }, [selectedUser]);
 
   return (
-    <div className="h-screen bg-gray-100 flex flex-col md:flex-row">
-      <div className={`${
-        selectedUser && !showUserList ? 'hidden md:block' : 'block'
-      } w-full md:w-1/3 p-4 border-r`}>
-        <Search onSelectUser={handleSelectUser} />
-      </div>
+    <div className="h-screen bg-background">
+      {/* Header */}
+      <header className="h-14 border-b px-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+              <Search onSelectUser={handleSelectUser} />
+            </SheetContent>
+          </Sheet>
+          <h1 className="font-semibold">Chat App</h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <Button variant="ghost" size="icon" onClick={handleLogout}>
+            <LogOut className="h-5 w-5" />
+          </Button>
+        </div>
+      </header>
 
-      <div className={`${
-        !selectedUser || showUserList ? 'hidden' : 'block'
-      } w-full md:block md:w-2/3 p-4 flex flex-col h-screen`}>
-        {selectedUser ? (
-          <>
-            <div className="flex items-center gap-2 mb-4">
-              <button
-                onClick={() => setShowUserList(true)}
-                className="md:hidden bg-gray-200 p-2 rounded"
-              >
-                ←
-              </button>
-              <h2 className="text-lg font-bold">{selectedUser.username}</h2>
+      {/* Main Content */}
+      <div className="h-[calc(100vh-3.5rem)] flex">
+        <div className="hidden md:block w-[300px] border-r p-4">
+          <Search onSelectUser={handleSelectUser} />
+        </div>
+
+        <div className="flex-1">
+          {selectedUser ? (
+            <div className="h-full flex flex-col">
+              <div className="border-b p-4">
+                <h2 className="font-semibold">{selectedUser.username}</h2>
+              </div>
+              <div className="flex-1">
+                <ChatBox 
+                  socket={socket}
+                  selectedUser={selectedUser}
+                  messages={messages}
+                  setMessages={setMessages}
+                />
+              </div>
             </div>
-            <ChatBox 
-              socket={socket}
-              selectedUser={selectedUser}
-              messages={messages}
-              setMessages={setMessages}
-            />
-          </>
-        ) : (
-          <p className="text-gray-500 text-center">Select a user to start chatting</p>
-        )}
+          ) : (
+            <div className="h-full flex items-center justify-center text-muted-foreground">
+              Select a user to start chatting
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
