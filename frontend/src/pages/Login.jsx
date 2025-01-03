@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import backendlink from '../backendlink.js';
 
@@ -41,7 +41,7 @@ function Login() {
         />
         <button type="submit" className="bg-blue-500 text-white w-full p-2 rounded">Login</button>
         <p className="mt-4 text-sm">
-          Don't have an account? <a href="/signup" className="text-blue-500">Signup</a>
+          Don't have an account? <Link to="/signup" className="text-blue-500">Signup</Link>
         </p>
       </form>
     </div>
