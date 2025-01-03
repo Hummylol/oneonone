@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import backendlink from '../backendlink.js';
 
 function Signup() {
   const [username, setUsername] = useState('');
@@ -11,7 +12,7 @@ function Signup() {
   const handleSignup = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:5000/auth/signup', { username, email, password });
+      await axios.post(`${backendlink}/auth/signup`, { username, email, password });
       alert('Signup successful! Please login.');
       navigate('/');
     } catch (err) {

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import backendlink from '../backendlink.js';
+
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -10,12 +12,12 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('http://localhost:5000/auth/login', { email, password });
+      const res = await axios.post(`${backendlink}/auth/login`, { email, password });
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('userId', res.data.userId);
       navigate('/chat');
     } catch (err) {
-      alert(err.response.data.error);
+      alert(err);
     }
   };
 

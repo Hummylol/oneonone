@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import axios from 'axios';
+import backendlink from '../backendlink.js';
 
-const socket = io('http://localhost:5000', {
+const socket = io(backendlink, {
   reconnection: true,
   reconnectionAttempts: 5,
   reconnectionDelay: 1000,
@@ -24,7 +25,7 @@ function Chat() {
     
     const fetchCurrentUser = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/user/${localStorage.getItem('userId')}`);
+        const res = await axios.get(`${backendlink}/user/${localStorage.getItem('userId')}`);
         setCurrentUser(res.data);
       } catch (err) {
         console.error('Error fetching current user:', err.message);
@@ -55,7 +56,7 @@ function Chat() {
   const handleSearch = async () => {
     try {
       const currentUserId = localStorage.getItem('userId');
-      const res = await axios.get(`http://localhost:5000/user/search/${search}?currentUserId=${currentUserId}`);
+      const res = await axios.get(`${backendlink}/user/search/${search}?currentUserId=${currentUserId}`);
       setUsers(res.data);
     } catch (err) {
       console.error('Error fetching users:', err.message);
@@ -68,7 +69,7 @@ function Chat() {
 
     try {
       const res = await axios.get(
-        `http://localhost:5000/user/chats/${localStorage.getItem('userId')}/${user._id}`
+        `${backendlink}/user/chats/${localStorage.getItem('userId')}/${user._id}`
       );
       setMessages(res.data);
     } catch (err) {
@@ -139,7 +140,7 @@ function Chat() {
     try {
       const userId = localStorage.getItem('userId');
       const response = await axios.delete(
-        `http://localhost:5000/user/message/${contextMenu.messageId}`,
+        `${backendlink}user/message/${contextMenu.messageId}`,
         { params: { userId: userId } }
       );
       
