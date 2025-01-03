@@ -27,14 +27,14 @@ app.use(express.json());
 // CORS middleware for express
 app.use(cors({
   origin: ['http://localhost:5173', 'https://humaidchat.vercel.app'],
-  methods: ['GET', 'POST'],
+  methods: ['GET', 'POST','DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true, // If using cookies or any credentials
 }));
 
 // MongoDB connection
 mongoose
-  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.error(err));
 
@@ -42,12 +42,7 @@ mongoose
 app.use('/auth', authRoutes);
 app.use('/user', userRoutes);
 
-// Add this to debug routes
-app._router.stack.forEach(function(r){
-  if (r.route && r.route.path){
-    console.log(r.route.path)
-  }
-});
+
 
 // Add this before your socket.io logic
 const connectedUsers = new Set();
