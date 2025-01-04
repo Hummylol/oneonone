@@ -23,17 +23,16 @@ function Search({ onSelectUser }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
+      <div className="flex  gap-2">
         <Input
           type="text"
-          placeholder="Search users"
+          placeholder="Search username"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="flex-1"
         />
         <Button onClick={handleSearch} variant="secondary">
-          <SearchIcon className="h-4 w-4 mr-2" />
-          Search
+          <SearchIcon className="h-4 w-4" />
         </Button>
       </div>
       <ScrollArea className="h-[calc(100vh-200px)]">

@@ -6,9 +6,10 @@ import Search from '../components/Search';
 import ChatBox from '../components/ChatBox';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, LogOut } from "lucide-react";
+import { ArrowLeft, LogOut } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+import MobileSearchSheet from '../components/MobileSearchSheet';
+import UserHistory from '@/components/UserHistory.jsx';
 
 const socket = io(backendlink, {
   reconnection: true,
@@ -21,12 +22,13 @@ function Chat() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [messages, setMessages] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) navigate('/');
-    
+
     const fetchCurrentUser = async () => {
       try {
         const res = await axios.get(`${backendlink}/user/${localStorage.getItem('userId')}`);
@@ -59,6 +61,7 @@ function Chat() {
 
   const handleSelectUser = async (user) => {
     setSelectedUser(user);
+    setSheetOpen(false);
     socket.emit('join_room', localStorage.getItem('userId'));
 
     try {
@@ -80,12 +83,12 @@ function Chat() {
   useEffect(() => {
     const handleReceiveMessage = (message) => {
       setMessages((prevMessages) => {
-        const isRelevantChat = 
+        const isRelevantChat =
           (message.sender === selectedUser?._id && message.receiver === localStorage.getItem('userId')) ||
           (message.sender === localStorage.getItem('userId') && message.receiver === selectedUser?._id);
-        
+
         if (!isRelevantChat) return prevMessages;
-        
+
         const isDuplicate = prevMessages.some(msg => msg._id === message._id);
         if (isDuplicate) return prevMessages;
 
@@ -110,22 +113,23 @@ function Chat() {
       {/* Header */}
       <header className="h-14 border-b px-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-[300px] sm:w-[400px]">
-              <Search onSelectUser={handleSelectUser} />
-            </SheetContent>
-          </Sheet>
+          <MobileSearchSheet 
+            open={sheetOpen} 
+            onOpenChange={setSheetOpen} 
+            onSelectUser={handleSelectUser} 
+          />
           <h1 className="font-semibold">Chat App</h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <ThemeToggle />
-          <Button variant="ghost" size="icon" onClick={handleLogout}>
-            <LogOut className="h-5 w-5" />
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={handleLogout} 
+            className="group relative p-2 overflow-hidden flex items-center gap-2 transition-all duration-700 hover:w-32 hover:bg-red-500 hover:text-white"
+          >
+            <span className="absolute left-2 opacity-0 group-hover:opacity-100">Logout</span>
+            <LogOut className="h-5 w-5 ml-auto" />
           </Button>
         </div>
       </header>
@@ -139,11 +143,19 @@ function Chat() {
         <div className="flex-1">
           {selectedUser ? (
             <div className="h-full flex flex-col">
-              <div className="border-b p-4">
+              <div className="flex items-center justify-between border-b p-2">
                 <h2 className="font-semibold">{selectedUser.username}</h2>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="flex" 
+                  onClick={()=>setSelectedUser(null)}
+                  >
+                    <ArrowLeft/>
+                </Button>
               </div>
               <div className="flex-1">
-                <ChatBox 
+                <ChatBox
                   socket={socket}
                   selectedUser={selectedUser}
                   messages={messages}
@@ -152,8 +164,13 @@ function Chat() {
               </div>
             </div>
           ) : (
-            <div className="h-full flex items-center justify-center text-muted-foreground">
-              Select a user to start chatting
+            <div className="h-full flex ">
+              
+
+            {/*THIS IS WHERE ALL THE PEOPLE YOU HAVE DMD DISPLAY*/}
+            <UserHistory currentUser={currentUser} onSelectUser={handleSelectUser} />
+
+
             </div>
           )}
         </div>

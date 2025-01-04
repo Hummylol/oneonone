@@ -69,5 +69,90 @@ router.delete('/message/:messageId', async (req, res) => {
   }
 });
 
+// Add this new route to get chat history
+router.get('/chat-history/:userId', async (req, res) => {
+  try {
+    // Find all chats where the user is either sender or receiver
+    const chats = await Chat.find({
+      $or: [
+        { sender: req.params.userId },
+        { receiver: req.params.userId }
+      ]
+    }).populate('sender receiver', 'username');
+
+    // Extract unique users from the chats
+    const uniqueUsers = new Set();
+    const users = [];
+
+    chats.forEach(chat => {
+      const otherUser = chat.sender._id.toString() === req.params.userId 
+        ? chat.receiver 
+        : chat.sender;
+      
+      if (!uniqueUsers.has(otherUser._id.toString())) {
+        uniqueUsers.add(otherUser._id.toString());
+        users.push(otherUser);
+      }
+    });
+
+    res.status(200).json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/message/:messageId/reaction', async (req, res) => {
+  const { messageId } = req.params;
+  const { userId, emoji } = req.body;
+
+  try {
+    const message = await Chat.findById(messageId);
+
+    if (!message) {
+      return res.status(404).json({ error: 'Message not found' });
+    }
+
+    const existingReaction = message.reactions.find(
+      (reaction) => reaction.userId.toString() === userId
+    );
+
+    if (existingReaction) {
+      // Update the reaction if it already exists
+      existingReaction.emoji = emoji;
+    } else {
+      // Add a new reaction
+      message.reactions.push({ userId, emoji });
+    }
+
+    await message.save();
+    res.status(200).json({ message: 'Reaction added/updated successfully', reactions: message.reactions });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+router.delete('/message/:messageId/reaction', async (req, res) => {
+  const { messageId } = req.params;
+  const { userId } = req.query;
+
+  try {
+    const message = await Chat.findById(messageId);
+
+    if (!message) {
+      return res.status(404).json({ error: 'Message not found' });
+    }
+
+    message.reactions = message.reactions.filter(
+      (reaction) => reaction.userId.toString() !== userId
+    );
+
+    await message.save();
+    res.status(200).json({ message: 'Reaction removed successfully', reactions: message.reactions });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 export default router;

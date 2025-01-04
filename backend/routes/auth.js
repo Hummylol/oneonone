@@ -34,4 +34,13 @@ router.post('/login', async (req, res) => {
   }
 });
 
+//status
+router.get('/status', (req, res) => {
+  try {
+    res.status(200).json({ status: 'online' }); // Server is running
+  } catch (err) {
+    res.status(500).json({ status: 'offline', message: 'Server is offline' }); // Handle server downtime
+  }
+});
+
 export default router;
