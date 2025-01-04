@@ -26,7 +26,7 @@ function Login() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-background">
+    <div className="flex flex-col gap-10 justify-center items-center min-h-screen bg-background">
       <ServerStatus/>
       <Card className="w-[350px]">
         <form onSubmit={handleLogin}>
