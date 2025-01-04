@@ -6,6 +6,7 @@ import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import ServerStatus from '@/components/ServerStatus.jsx';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -26,6 +27,7 @@ function Login() {
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-background">
+      <ServerStatus/>
       <Card className="w-[350px]">
         <form onSubmit={handleLogin}>
           <CardHeader>

@@ -25,7 +25,6 @@ function UserHistory({ currentUser, onSelectUser }) {
 
   return (
     <div className="w-full p-4">
-      <ServerStatus/>
       <div className="space-y-2">
         {chatHistory.map((user) => (
           <div
